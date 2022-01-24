@@ -34,9 +34,15 @@ class NoProgressIndicator(ProgressIndicator):
 class TTYProgressIndicator(ProgressIndicator):
     def __init__(self, name):
         self.name = name
+        self.first_message = False
 
     def progress(self, percent: int) -> None:
-        sys.stderr.write(f"\r{self.name} ... %3d%%" % percent)
+        if sys.stderr.isatty():
+            sys.stderr.write(f"\r{self.name} ... %3d%%" % percent)
+        elif self.first_message:
+            sys.stderr.write(f"\r{self.name}\n")
+            self.first_message = False
 
     def finish(self) -> None:
-        sys.stderr.write("\n")
+        if sys.stderr.isatty():
+            sys.stderr.write("\n")
