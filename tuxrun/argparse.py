@@ -171,10 +171,13 @@ def setup_parser() -> argparse.ArgumentParser:
     artefact("bios")
     artefact("bl1")
     artefact("dtb")
+    artefact("extsys")
     artefact("fip")
+    artefact("flash0")
     artefact("kernel")
     artefact("mcp-fw")
     artefact("mcp-romfw")
+    artefact("mmc")
     artefact("modules")
     group.add_argument(
         "--overlay",

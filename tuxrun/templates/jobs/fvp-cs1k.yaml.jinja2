@@ -1,0 +1,76 @@
+device_type: fvp
+job_name: fvp-csk1-boot
+
+timeouts:
+  connection:
+    minutes: 3
+  job:
+    minutes: 80
+  actions:
+    auto-login-action:
+      minutes: 5
+    fvp-deploy:
+      minutes: 20
+    download-retry:
+      minutes: 20
+    http-download:
+      minutes: 20
+
+priority: medium
+visibility:
+  group:
+    - cassini
+
+context:
+  boot_character_delay: 250
+  test_character_delay: 250
+
+actions:
+- deploy:
+    to: fvp
+    images:
+      bl1:
+        url: "{{ bl1 }}"
+      cs1000:
+        url: "{{ flash0 }}"
+      extsys:
+        url: "{{ extsys }}"
+      mmc0:
+        url: "{{ mmc }}"
+        compression: gz
+
+- boot:
+    method: fvp
+    docker:
+      name: "fvp:cs1k-11.19.21"
+      local: true
+    image: /opt/model/FVP_Corstone_1000/models/Linux64_GCC-9.3/FVP_Corstone-1000
+    version_string: 'Fast Models [^\\n]+'
+    timeout:
+      minutes: 10
+    console_string: 'host_terminal_0: Listening for serial connection on port (?P<PORT>\d+)'
+    feedbacks:
+      - '(?P<NAME>host_terminal_1): Listening for serial connection on port (?P<PORT>\d+)'
+      - '(?P<NAME>secenc_terminal): Listening for serial connection on port (?P<PORT>\d+)'
+      - '(?P<NAME>extsys_terminal): Listening for serial connection on port (?P<PORT>\d+)'
+    arguments:
+      - "-C se.trustedBootROMloader.fname={BL1}"
+      - "-C board.msd_mmc.p_mmc_file={MMC0}"
+      - "-C extsys_harness0.extsys_flashloader.fname={EXTSYS}"
+      - "-C extsys0.extsys_terminal.start_telnet=1"
+      - "-C host.host_terminal_0.start_telnet=1"
+      - "-C host.host_terminal_1.start_telnet=1"
+      - "-C se.secenc_terminal.start_telnet=1"
+      - "--data board.flash0={CS1000}@0x68000000"
+    auto_login:
+      login_prompt: 'corstone1000-fvp login:.*'
+      username: cassini
+      login_commands:
+        - cassini123
+        - cassini123
+        - sudo su -
+    prompts:
+      - 'New password: '
+      - 'Re-enter new password: '
+      - '@corstone1000-fvp:.+\$ '
+      - '@corstone1000-fvp:.+# '

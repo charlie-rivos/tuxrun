@@ -116,6 +116,66 @@ class AEMvAFVPDevice(FVPDevice):
         return [f"file://{tmpdir / 'startup.nsh'}"]
 
 
+class CS1kFVPDevice(FVPDevice):
+    name = "fvp-cs1k"
+
+    mandatory = [ "bl1", "extsys", "mmc", "flash0" ]
+
+    # bl1 = "https://storage.tuxboot.com/buildroot/fvp-cs1k/bl1.bin"
+    # extsys = "https://storage.tuxboot.com/buildroot/fvp-cs1k/es_flashfw.bin"
+    # mmc = "https://storage.tuxboot.com/buildroot/fvp-cs1k/cassini-image-base-corstone1000-fvp.wic.pad"
+    # flash0 = "https://storage.tuxboot.com/buildroot/fvp-cs1k/corstone1000-image-corstone1000-fvp.wic"
+
+    def validate(
+        self,
+        bl1,
+        extsys,
+        flash0,
+        mmc,
+        parameters,
+        tests,
+        **kwargs,
+    ):
+        invalid_args = ["--" + k.replace("_", "-") for k in kwargs if kwargs[k]]
+        if len(invalid_args) > 0:
+            raise InvalidArgument(
+                f"Invalid option(s) for fvp-cs1k devices: {', '.join(sorted(invalid_args))}"
+            )
+        args = locals()
+        missing_args = [
+            "--" + k.replace("_", "-") for k in self.mandatory if not args[k]
+        ]
+        if len(missing_args) > 0:
+            raise InvalidArgument(
+                f"Missing option(s) for fvp-cs1k devices: {', '.join(sorted(missing_args))}"
+            )
+
+        if tests and not self.support_tests:
+            raise InvalidArgument("Tests are not supported on this device")
+
+        for test in tests:
+            test.validate(device=self, parameters=parameters, **kwargs)
+
+    def definition(self, **kwargs):
+        kwargs = kwargs.copy()
+
+        # render the template
+        tests = [
+            t.render(
+                arch="arm64",
+                commands=kwargs["commands"],
+                command_name=kwargs["command_name"],
+                tmpdir=kwargs["tmpdir"],
+                overlays=kwargs["overlays"],
+                parameters=kwargs["parameters"],
+                test_definitions=kwargs["test_definitions"],
+            )
+            for t in kwargs["tests"]
+        ]
+        return templates.jobs().get_template("fvp-cs1k.yaml.jinja2").render(
+            **kwargs
+        ) + "".join(tests)
+
 class MorelloFVPDevice(FVPDevice):
     mandatory = [
         "ap_romfw",
