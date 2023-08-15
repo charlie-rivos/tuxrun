@@ -166,8 +166,9 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
     extra_assets = []
     overlays = []
     if options.modules:
-        overlays.append(("modules", options.modules, "/"))
-        extra_assets.append(options.modules)
+        if not options.device.name.startswith('nfs-'):
+            overlays.append(("modules", options.modules, "/"))
+            extra_assets.append(options.modules)
     for index, item in enumerate(options.overlays):
         overlays.append((f"overlay-{index:02}", item, "/"))
         extra_assets.append(item)
@@ -217,6 +218,8 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
         "parameters": options.parameters,
         "uefi": options.uefi,
     }
+    if options.device.name.startswith('nfs-'):
+        def_arguments["modules"] = options.modules
     definition = options.device.definition(**def_arguments)
     LOG.debug("job definition")
     LOG.debug(definition)
@@ -360,6 +363,10 @@ def main() -> int:
         options.device = options.device or f"qemu-{tux.target_arch}"
         if options.device == "qemu-armv5":
             options.dtb = tux.url + "/dtbs/versatile-pb.dtb"
+        if options.device == "nfs-bcm2711-rpi-4-b":
+            options.dtb = tux.url + "/dtbs/broadcom/bcm2711-rpi-4-b.dtb"
+        if options.device == "nfs-juno-r2":
+            options.dtb = tux.url + "/dtbs/arm/juno-r2.dtb"
 
         for k in options.parameters:
             if isinstance(options.parameters[k], str):

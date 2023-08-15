@@ -47,4 +47,5 @@ class Device:
 
 
 import tuxrun.devices.fvp  # noqa: E402
+import tuxrun.devices.nfs  # noqa: E402,F401
 import tuxrun.devices.qemu  # noqa: E402,F401

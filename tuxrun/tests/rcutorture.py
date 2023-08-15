@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class RCUTorture(Test):
-    devices = ["qemu-*", "fvp-aemva"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*"]
     name = "rcutorture"
     timeout = 15
     need_test_definition = True
