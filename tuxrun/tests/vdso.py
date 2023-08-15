@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class VdsoTest(Test):
-    devices = ["qemu-*", "fvp-aemva", "nfs-*"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*", "fastboot-*"]
     name = "vdso"
     timeout = 15
     need_test_definition = True

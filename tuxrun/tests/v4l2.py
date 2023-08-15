@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class V4L2(Test):
-    devices = ["qemu-*", "fvp-aemva", "nfs-*"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*", "fastboot-*"]
     name = "v4l2"
     timeout = 25
     need_test_definition = True

@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class KSelfTest(Test):
-    devices = ["qemu-*", "fvp-aemva", "nfs-*"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*", "fastboot-*"]
     cmdfile: str = ""
     need_test_definition = True
 
@@ -36,14 +36,14 @@ class KSelfTest(Test):
 
 
 class KSelftestArm64(KSelfTest):
-    devices = ["qemu-arm64", "fvp-aemva", "nfs-juno-r2", "nfs-bcm2711-rpi-4-b"]
+    devices = ["qemu-arm64", "fvp-aemva", "nfs-juno-r2", "nfs-bcm2711-rpi-4-b", "fastboot-dragonboard-410c", "fastboot-dragonboard-845c", "fastboot-e850-96"]
     name = "kselftest-arm64"
     cmdfile = "arm64"
     timeout = 45
 
 
 class KSelftestBreakpoints(KSelfTest):
-    devices = ["qemu-arm64", "fvp-aemva", "*-x86_64", "nfs-juno-r2", "nfs-bcm2711-rpi-4-b"]
+    devices = ["qemu-arm64", "fvp-aemva", "*-x86_64", "nfs-juno-r2", "nfs-bcm2711-rpi-4-b", "fastboot-dragonboard-410c", "fastboot-dragonboard-845c", "fastboot-e850-96"]
     name = "kselftest-breakpoints"
     cmdfile = "breakpoints"
     timeout = 5

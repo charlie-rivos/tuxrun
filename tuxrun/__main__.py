@@ -166,7 +166,7 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
     extra_assets = []
     overlays = []
     if options.modules:
-        if not options.device.name.startswith('nfs-'):
+        if not options.device.name.startswith('nfs-') and not options.device.name.startswith('fastboot-'):
             overlays.append(("modules", options.modules, "/"))
             extra_assets.append(options.modules)
     for index, item in enumerate(options.overlays):
@@ -218,7 +218,7 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
         "parameters": options.parameters,
         "uefi": options.uefi,
     }
-    if options.device.name.startswith('nfs-'):
+    if options.device.name.startswith('nfs-') or options.device.name.startswith('fastboot-'):
         def_arguments["modules"] = options.modules
     definition = options.device.definition(**def_arguments)
     LOG.debug("job definition")
@@ -367,6 +367,14 @@ def main() -> int:
             options.dtb = tux.url + "/dtbs/broadcom/bcm2711-rpi-4-b.dtb"
         if options.device == "nfs-juno-r2":
             options.dtb = tux.url + "/dtbs/arm/juno-r2.dtb"
+        if options.device == "fastboot-dragonboard-410c":
+            options.dtb = tux.url + "/dtbs/qcom/apq8016-sbc.dtb"
+        if options.device == "fastboot-dragonboard-845c":
+            options.dtb = tux.url + "/dtbs/qcom/sdm845-db845c.dtb"
+        if options.device == "fastboot-e850-96":
+            options.dtb = tux.url + "/dtbs/exynos/exynos850-e850-96.dtb"
+        if options.device == "fastboot-x15":
+            options.dtb = tux.url + "/dtbs/am57xx-beagle-x15.dtb"
 
         for k in options.parameters:
             if isinstance(options.parameters[k], str):
