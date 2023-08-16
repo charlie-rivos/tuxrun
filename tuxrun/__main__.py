@@ -22,7 +22,7 @@ from urllib.parse import urlparse
 
 from tuxrun import templates
 from tuxrun.argparse import filter_options, pathurlnone, setup_parser
-from tuxrun.assets import get_rootfs, get_test_definitions
+from tuxrun.assets import get_rootfs, get_test_definitions, TEST_DEFINITIONS
 from tuxrun.devices import Device
 from tuxrun.exceptions import InvalidArgument
 from tuxrun.requests import requests_get
@@ -175,7 +175,9 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
 
     # Add test definitions only when needed
     test_definitions = None
-    if any(t.need_test_definition for t in options.tests):
+    if options.lava_definition:
+        test_definitions = TEST_DEFINITIONS
+    elif any(t.need_test_definition for t in options.tests):
         test_definitions = get_test_definitions(
             ProgressIndicator.get("Downloading test definitions")
         )
@@ -421,7 +423,7 @@ def main() -> int:
     try:
         options.device = Device.select(options.device)()
         # Download only after the device has been found
-        if options.device.flag_cache_rootfs:
+        if options.device.flag_cache_rootfs and not options.lava_definition:
             options.rootfs = pathurlnone(
                 get_rootfs(
                     options.device,
