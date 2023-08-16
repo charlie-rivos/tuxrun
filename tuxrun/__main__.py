@@ -302,21 +302,35 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
         (tmpdir / "dispatcher" / "tmp").mkdir()
         runtime.pre_run(tmpdir)
 
-    # Build the lava-run arguments list
-    args = [
-        "lava-run",
-        "--device",
-        str(tmpdir / "device.yaml"),
-        "--dispatcher",
-        str(tmpdir / "dispatcher.yaml"),
-        "--job-id",
-        "1",
-        "--output-dir",
-        "output",
-        str(tmpdir / "definition.yaml"),
-    ]
+    if options.lavacli_lab_identity:
+        # Build the lavacli arguments list
+        args = [
+            "lavacli",
+            "--identity",
+            options.lavacli_lab_identity,
+            "jobs",
+            "submit",
+            str(tmpdir / "definition.yaml"),
+        ]
+        print(args)
+
+    else:
+        # Build the lava-run arguments list
+        args = [
+            "lava-run",
+            "--device",
+            str(tmpdir / "device.yaml"),
+            "--dispatcher",
+            str(tmpdir / "dispatcher.yaml"),
+            "--job-id",
+            "1",
+            "--output-dir",
+            "output",
+            str(tmpdir / "definition.yaml"),
+        ]
 
     results = Results(options.tests)
+
     # Start the writer (stdout or log-file)
     with Writer(
         options.log_file,
@@ -325,10 +339,30 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
         options.log_file_yaml,
     ) as writer:
         # Start the runtime
+        jobid = None
         with runtime.run(args):
-            for line in runtime.lines():
-                writer.write(line)
-                results.parse(line)
+            if options.lavacli_lab_identity:
+                for line in runtime.stdout():
+                    jobid = line
+                    print(jobid, flush=True)
+            else:
+                for line in runtime.stderr():
+                    writer.write(line)
+                    results.parse(line)
+        if jobid:
+            args = [
+                "lavacli",
+                "--identity",
+                options.lavacli_lab_identity,
+                "jobs",
+                "logs",
+                jobid,
+            ]
+            with runtime.run(args):
+                for line in runtime.stdout():
+                    writer.write(line)
+                    results.parse(line)
+
     runtime.post_run()
     if options.results:
         if str(options.results) == "-":

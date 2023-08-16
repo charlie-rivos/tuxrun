@@ -40,6 +40,7 @@ def filter_options(options):
         "results_hooks",
         "debug",
         "lava_definition",
+        "lavacli_lab_identity",
     ]
     return {k: getattr(options, k) for k in vars(options) if k not in keys}
 
@@ -323,6 +324,12 @@ def setup_parser() -> argparse.ArgumentParser:
         default=False,
         action="store_true",
         help="Save the LAVA definition.yaml file",
+    )
+
+    group.add_argument(
+        "--lavacli-lab-identity",
+        default=None,
+        help="Point to a LAVA lab url",
     )
 
     group = parser.add_argument_group("debugging")

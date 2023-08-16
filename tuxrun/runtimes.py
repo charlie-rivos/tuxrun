@@ -69,6 +69,7 @@ class Runtime:
                 args,
                 bufsize=1,
                 stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
                 text=True,
                 preexec_fn=os.setpgrp,
             )
@@ -90,8 +91,11 @@ class Runtime:
             for proc in self.__sub_procs__:
                 proc.wait()
 
-    def lines(self):
+    def stderr(self):
         return self.__proc__.stderr
+
+    def stdout(self):
+        return self.__proc__.stdout
 
     def kill(self):
         if self.__proc__:
@@ -134,6 +138,7 @@ class ContainerRuntime(Runtime):
             dsts.add(dst)
             ro = "ro" if ro else "rw"
             prefix.extend(["-v", f"{src}:{dst}:{ro}"])
+        prefix.extend(["-v", f"{Path.home()}/.config:/root/.config:ro"])
         prefix.extend(["--name", self.__name__])
         return prefix + [self.__image__] + args
 
