@@ -38,6 +38,12 @@ fvp-aemva | ltp-(cap_bounds, commands, containers, controllers, crypto, cve, fil
     `tuxrun --parameters KSELFTEST=http://.../kselftest.tar.xz` or
     `tuxrun --parameters PERF=http://.../perf.tar.xz`
 
+> Tip: "Generate a definition.yaml file"
+    In order to generate a definition.yaml file with a different 'priority' set
+    in the file. This can be done by adding
+    tuxrun --parameters lava_job_priority=25 --lava-definition
+    Default the priority is set to 50, accepted values 1-100.
+
 > Info: "kselftest parameters"
     The `CPUPOWER` and `KSELFTEST` parameters are not mandatory. If kselftest
     is present on the filesystem (in `/opt/kselftests/default-in-kernel/`) then the
@@ -96,6 +102,12 @@ fvp-morello-oe      | fwts           |                                  |
 > Tip: "Passing parameters"
     In order to pass parameters, use `tuxrun --parameters USERDATA=http://.../userdata.tar.xz`
 
+> Tip: "Generate a definition.yaml file"
+    In order to generate a definition.yaml file with a different 'priority' set
+    in the file. This can be done by adding
+    tuxrun --parameters lava_job_priority=25 --lava-definition
+    Default the priority is set to 50, accepted values 1-100.
+
 > Tip: "Default parameters"
     **GTEST_FILTER** is optional and defaults to
     ```
@@ -132,6 +144,12 @@ qemu-\* | ltp-(cap_bounds, commands, containers, controllers, crypto, cve, filec
     In order to pass parameters for kselftest or perf, use
     `tuxrun --parameters KSELFTEST=http://.../kselftest.tar.xz` or
     `tuxrun --parameters PERF=http://.../perf.tar.xz`
+
+> Tip: "Generate a definition.yaml file"
+    In order to generate a definition.yaml file with a different 'priority' set
+    in the file. This can be done by adding
+    tuxrun --parameters lava_job_priority=25 --lava-definition
+    Default the priority is set to 50, accepted values 1-100.
 
 > Info: "kselftest parameters"
     The `CPUPOWER` and `KSELFTEST` parameters are not mandatory. If kselftest

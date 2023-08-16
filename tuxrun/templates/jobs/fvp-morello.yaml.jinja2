@@ -1,7 +1,7 @@
 device_type: "fvp"
 
 job_name: "tuxrun@{{ device.name }}"
-priority: medium
+priority: {{ lava_job_priority }}
 visibility: public
 
 {% block context %}{% endblock %}
