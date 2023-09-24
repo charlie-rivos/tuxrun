@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class KUnit(Test):
-    devices = ["qemu-*", "fvp-aemva"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*", "fastboot-*"]
     name = "kunit"
     timeout = 20
     need_test_definition = True

@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class Perf(Test):
-    devices = ["qemu-*", "fvp-aemva"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*", "fastboot-*"]
     name = "perf"
     timeout = 30
     need_test_definition = True

@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class KSelfTest(Test):
-    devices = ["qemu-*", "fvp-aemva"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*", "fastboot-*"]
     cmdfile: str = ""
     need_test_definition = True
 
@@ -36,14 +36,14 @@ class KSelfTest(Test):
 
 
 class KSelftestArm64(KSelfTest):
-    devices = ["qemu-arm64", "fvp-aemva"]
+    devices = ["qemu-arm64", "fvp-aemva", "nfs-juno-r2", "nfs-bcm2711-rpi-4-b", "fastboot-dragonboard-410c", "fastboot-dragonboard-845c", "fastboot-e850-96"]
     name = "kselftest-arm64"
     cmdfile = "arm64"
     timeout = 45
 
 
 class KSelftestBreakpoints(KSelfTest):
-    devices = ["qemu-arm64", "fvp-aemva", "qemu-x86_64"]
+    devices = ["qemu-arm64", "fvp-aemva", "*-x86_64", "nfs-juno-r2", "nfs-bcm2711-rpi-4-b", "fastboot-dragonboard-410c", "fastboot-dragonboard-845c", "fastboot-e850-96"]
     name = "kselftest-breakpoints"
     cmdfile = "breakpoints"
     timeout = 5
@@ -164,7 +164,7 @@ class KSelftestIa64(KSelfTest):
 
 
 class KSelftestIntelPstate(KSelfTest):
-    devices = ["qemu-x86_64", "qemu-i386"]
+    devices = ["*-x86_64", "*-i386"]
     name = "kselftest-intel_pstate"
     cmdfile = "intel_pstate"
     timeout = 5
@@ -195,7 +195,7 @@ class KSelftestKcmp(KSelfTest):
 
 
 class KSelftestKexec(KSelfTest):
-    devices = ["qemu-x86_64", "qemu-i386", "qemu-ppc64le"]
+    devices = ["*-x86_64", "*-i386", "qemu-ppc64le"]
     name = "kselftest-kexec"
     cmdfile = "kexec"
     timeout = 5
@@ -226,7 +226,7 @@ class KSelftestLib(KSelfTest):
 
 
 class KSelftestLivepatch(KSelfTest):
-    devices = ["qemu-x86_64", "qemu-i386"]
+    devices = ["*-x86_64", "*-i386"]
     name = "kselftest-livepatch"
     cmdfile = "livepatch"
     timeout = 5
@@ -403,7 +403,7 @@ class KSelftestPtp(KSelfTest):
 
 
 class KSelftestPtrace(KSelfTest):
-    devices = ["qemu-x86_64", "qemu-i386"]
+    devices = ["*-x86_64", "*-i386"]
     name = "kselftest-ptrace"
     cmdfile = "ptrace"
     timeout = 5
@@ -566,7 +566,7 @@ class KSelftestWatchdog(KSelfTest):
 
 
 class KSelftestX86(KSelfTest):
-    devices = ["qemu-x86_64", "qemu-i386"]
+    devices = ["*-x86_64", "*-i386"]
     name = "kselftest-x86"
     cmdfile = "x86"
     timeout = 5

@@ -8,7 +8,7 @@ RUN apt-get update && \
     curl -L "https://download.opensuse.org/repositories/devel:kubic:libcontainers:unstable/Debian_Unstable/Release.key" | apt-key add -; else echo "deb https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/Debian_12/ /" > /etc/apt/sources.list.d/kubic.list && \
     curl -L "https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/Debian_12/Release.key" | apt-key add -; fi && \
     apt-get update && \
-    apt-get install --yes libgpgme11-dev podman ${EXTRA_PACKAGES} && \
+    apt-get install --yes libgpgme11-dev podman lavacli ${EXTRA_PACKAGES} && \
     echo "deb     http://ftp.de.debian.org/debian/    testing main contrib non-free" > /etc/apt/sources.list.d/testing.list && \
     echo "deb-src http://ftp.de.debian.org/debian/    testing main contrib non-free" >> /etc/apt/sources.list.d/testing.list && \
     apt-get update && \

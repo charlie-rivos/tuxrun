@@ -22,7 +22,7 @@ from urllib.parse import urlparse
 
 from tuxrun import templates
 from tuxrun.argparse import filter_options, pathurlnone, setup_parser
-from tuxrun.assets import get_rootfs, get_test_definitions
+from tuxrun.assets import get_rootfs, get_test_definitions, TEST_DEFINITIONS
 from tuxrun.devices import Device
 from tuxrun.exceptions import InvalidArgument
 from tuxrun.requests import requests_get
@@ -166,15 +166,18 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
     extra_assets = []
     overlays = []
     if options.modules:
-        overlays.append(("modules", options.modules, "/"))
-        extra_assets.append(options.modules)
+        if not options.device.name.startswith('nfs-') and not options.device.name.startswith('fastboot-'):
+            overlays.append(("modules", options.modules, "/"))
+            extra_assets.append(options.modules)
     for index, item in enumerate(options.overlays):
         overlays.append((f"overlay-{index:02}", item, "/"))
         extra_assets.append(item)
 
     # Add test definitions only when needed
     test_definitions = None
-    if any(t.need_test_definition for t in options.tests):
+    if options.lava_definition:
+        test_definitions = TEST_DEFINITIONS
+    elif any(t.need_test_definition for t in options.tests):
         test_definitions = get_test_definitions(
             ProgressIndicator.get("Downloading test definitions")
         )
@@ -217,6 +220,8 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
         "parameters": options.parameters,
         "uefi": options.uefi,
     }
+    if options.device.name.startswith('nfs-') or options.device.name.startswith('fastboot-'):
+        def_arguments["modules"] = options.modules
     definition = options.device.definition(**def_arguments)
     LOG.debug("job definition")
     LOG.debug(definition)
@@ -300,21 +305,35 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
         (tmpdir / "dispatcher" / "tmp").mkdir()
         runtime.pre_run(tmpdir)
 
-    # Build the lava-run arguments list
-    args = [
-        "lava-run",
-        "--device",
-        str(tmpdir / "device.yaml"),
-        "--dispatcher",
-        str(tmpdir / "dispatcher.yaml"),
-        "--job-id",
-        "1",
-        "--output-dir",
-        "output",
-        str(tmpdir / "definition.yaml"),
-    ]
+    if options.lavacli_lab_identity:
+        # Build the lavacli arguments list
+        args = [
+            "lavacli",
+            "--identity",
+            options.lavacli_lab_identity,
+            "jobs",
+            "submit",
+            str(tmpdir / "definition.yaml"),
+        ]
+        print(args)
+
+    else:
+        # Build the lava-run arguments list
+        args = [
+            "lava-run",
+            "--device",
+            str(tmpdir / "device.yaml"),
+            "--dispatcher",
+            str(tmpdir / "dispatcher.yaml"),
+            "--job-id",
+            "1",
+            "--output-dir",
+            "output",
+            str(tmpdir / "definition.yaml"),
+        ]
 
     results = Results(options.tests)
+
     # Start the writer (stdout or log-file)
     with Writer(
         options.log_file,
@@ -323,10 +342,30 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path]) -> int:
         options.log_file_yaml,
     ) as writer:
         # Start the runtime
+        jobid = None
         with runtime.run(args):
-            for line in runtime.lines():
-                writer.write(line)
-                results.parse(line)
+            if options.lavacli_lab_identity:
+                for line in runtime.stdout():
+                    jobid = line
+                    print(jobid, flush=True)
+            else:
+                for line in runtime.stderr():
+                    writer.write(line)
+                    results.parse(line)
+        if jobid:
+            args = [
+                "lavacli",
+                "--identity",
+                options.lavacli_lab_identity,
+                "jobs",
+                "logs",
+                jobid,
+            ]
+            with runtime.run(args):
+                for line in runtime.stdout():
+                    writer.write(line)
+                    results.parse(line)
+
     runtime.post_run()
     if options.results:
         if str(options.results) == "-":
@@ -363,6 +402,18 @@ def main() -> int:
         options.device = options.device or f"qemu-{tux.target_arch}"
         if options.device == "qemu-armv5":
             options.dtb = tux.url + "/dtbs/versatile-pb.dtb"
+        if options.device == "nfs-bcm2711-rpi-4-b":
+            options.dtb = tux.url + "/dtbs/broadcom/bcm2711-rpi-4-b.dtb"
+        if options.device == "nfs-juno-r2":
+            options.dtb = tux.url + "/dtbs/arm/juno-r2.dtb"
+        if options.device == "fastboot-dragonboard-410c":
+            options.dtb = tux.url + "/dtbs/qcom/apq8016-sbc.dtb"
+        if options.device == "fastboot-dragonboard-845c":
+            options.dtb = tux.url + "/dtbs/qcom/sdm845-db845c.dtb"
+        if options.device == "fastboot-e850-96":
+            options.dtb = tux.url + "/dtbs/exynos/exynos850-e850-96.dtb"
+        if options.device == "fastboot-x15":
+            options.dtb = tux.url + "/dtbs/am57xx-beagle-x15.dtb"
 
         for k in options.parameters:
             if isinstance(options.parameters[k], str):
@@ -409,7 +460,7 @@ def main() -> int:
     try:
         options.device = Device.select(options.device)()
         # Download only after the device has been found
-        if options.device.flag_cache_rootfs:
+        if options.device.flag_cache_rootfs and not options.lava_definition:
             options.rootfs = pathurlnone(
                 get_rootfs(
                     options.device,

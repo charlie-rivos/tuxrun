@@ -8,7 +8,7 @@ from tuxrun.tests import Test
 
 
 class LTPTest(Test):
-    devices = ["qemu-*", "fvp-aemva"]
+    devices = ["qemu-*", "fvp-aemva", "nfs-*", "fastboot-*"]
     cmdfile: str = ""
     need_test_definition = True
 
