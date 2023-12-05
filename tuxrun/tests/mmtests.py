@@ -10,8 +10,11 @@ from tuxrun.tests import Test
 class MMTests(Test):
     devices = ["qemu-arm64", "qemu-x86_64"]
     configfile: str = ""
+    # By default, we only archive the results JSON file
     full_archive: bool = False
+    # Number of iterations to run the test, by default 10
     iterations: int = 10
+    # Timeout in minutes
     timeout = 90
     need_test_definition = True
 
