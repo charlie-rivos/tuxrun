@@ -8,7 +8,7 @@ RUN apt-get update && \
     curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Debian_11/Release.key" | apt-key add - && \
     apt-get update && \
     apt-get install --yes podman && \
-    apt-get install --yes python3-jinja2 python3-requests python3-yaml linux-image-amd64 && \
+    apt-get install --yes python3-jinja2 python3-requests python3-yaml python3-bs4 linux-image-amd64 && \
     rm /usr/sbin/iptables && \
     ln -s /usr/sbin/iptables-legacy /usr/sbin/iptables && \
     apt-get purge --yes gnupg && \

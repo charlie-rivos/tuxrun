@@ -335,6 +335,7 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path], artefacts: dict) -> in
         options.log_file_html,
         options.log_file_text,
         options.log_file_yaml,
+        options.raw_log_file_html,
     ) as writer:
         # Start the runtime
         with runtime.run(args):
@@ -403,6 +404,7 @@ def main() -> int:
                 options.log_file_text,
                 options.log_file_yaml,
                 options.results,
+                options.raw_log_file_html,
             ]
         ):
             cache_dir = get_new_output_dir(options.cache_dir)
@@ -418,6 +420,8 @@ def main() -> int:
                 options.metadata = cache_dir / "metadata.json"
             if options.results is None:
                 options.results = cache_dir / "results.json"
+            if options.raw_log_file_html is None:
+                options.raw_log_file_html = cache_dir / "raw-logs.html"
     elif options.log_file is None:
         options.log_file = "-"
 

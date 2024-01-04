@@ -14,6 +14,7 @@ requires = [
     "jinja2",
     "requests",
     "PyYAML",
+    "beautifulsoup4",
 ]
 
 [tool.flit.scripts]

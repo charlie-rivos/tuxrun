@@ -36,6 +36,7 @@ def filter_options(options):
         "log_file_html",
         "log_file_text",
         "log_file_yaml",
+        "raw_log_file_html",
         "metadata",
         "results",
         "results_hooks",
@@ -382,6 +383,12 @@ def setup_parser() -> argparse.ArgumentParser:
     )
     group.add_argument(
         "--log-file-yaml", default=None, type=Path, help="Store logs to file as YAML"
+    )
+    group.add_argument(
+        "--raw-log-file-html",
+        default=None,
+        type=Path,
+        help="Store raw logs to file as HTML",
     )
     group.add_argument(
         "--metadata", default=None, type=Path, help="Save test metadata to file (JSON)"

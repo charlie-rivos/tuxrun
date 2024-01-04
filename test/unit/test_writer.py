@@ -6,7 +6,7 @@ def test_write_log_file(tmp_path):
     html_file = tmp_path / "logs.html"
     text_file = tmp_path / "logs.txt"
     yaml_file = tmp_path / "logs.yaml"
-    with Writer(log_file, html_file, text_file, yaml_file) as writer:
+    with Writer(log_file, html_file, text_file, yaml_file, None) as writer:
         writer.write(
             '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513"}'
         )
@@ -45,7 +45,7 @@ def test_write_log_file(tmp_path):
 
 
 def test_write_stdout(capsys):
-    with Writer("-", None, None, None) as writer:
+    with Writer("-", None, None, None, None) as writer:
         writer.write(
             '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513"}'
         )
@@ -58,7 +58,7 @@ def test_write_stdout_logs(capsys, tmp_path):
     html_file = tmp_path / "logs.html"
     text_file = tmp_path / "logs.txt"
     yaml_file = tmp_path / "logs.yaml"
-    with Writer("-", html_file, text_file, yaml_file) as writer:
+    with Writer("-", html_file, text_file, yaml_file, None) as writer:
         writer.write(
             '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513"}'
         )
@@ -100,7 +100,7 @@ def test_write_stdout_logs(capsys, tmp_path):
 
 
 def test_write_stdout_feedback(capsys):
-    with Writer("-", None, None, None) as writer:
+    with Writer("-", None, None, None, None) as writer:
         writer.write(
             '{"lvl": "feedback", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513", "ns": "testing"}'
         )
@@ -113,7 +113,7 @@ def test_write_stdout_feedback_logs(capsys, tmp_path):
     html_file = tmp_path / "logs.html"
     text_file = tmp_path / "logs.txt"
     yaml_file = tmp_path / "logs.yaml"
-    with Writer("-", html_file, text_file, yaml_file) as writer:
+    with Writer("-", html_file, text_file, yaml_file, None) as writer:
         writer.write(
             '{"lvl": "feedback", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513", "ns": "testing"}'
         )
@@ -157,7 +157,7 @@ def test_write_stdout_feedback_logs(capsys, tmp_path):
 
 def test_writer_invalid_yaml(capsys, tmpdir):
     data = '{"lvl": "feedback", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513", "ns": "testing"}'
-    with Writer(tmpdir / "logs", None, None, tmpdir / "logs.yaml") as writer:
+    with Writer(tmpdir / "logs", None, None, tmpdir / "logs.yaml", None) as writer:
         writer.write("{")
         writer.write("hello world")
         writer.write("{}")

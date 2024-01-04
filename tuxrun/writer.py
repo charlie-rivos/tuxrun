@@ -4,8 +4,11 @@
 #
 # SPDX-License-Identifier: MIT
 
+from bs4 import BeautifulSoup
+from copy import deepcopy
 import html
 import logging
+from pathlib import Path
 import re
 import sys
 from contextlib import ContextDecorator
@@ -56,12 +59,27 @@ HTML_FOOTER = """</pre>
 </html>"""
 
 
+def get_child_div(data):
+    lvl = data.get("lvl", "info")
+    msg = deepcopy(data["msg"])
+    if isinstance(msg, dict):
+        msg = "\n" + (" ".join(f"{key}: {str(value)}\n" for key, value in msg.items()))
+        msg = msg.strip()
+    msg = html.escape(str(msg))
+
+    return BeautifulSoup(
+        f"<div class='log-entry {lvl}' log-level={lvl}>[{lvl.upper()}]   {msg}</div>\n",
+        "html.parser",
+    )
+
+
 class Writer(ContextDecorator):
-    def __init__(self, log_file, html_file, text_file, yaml_file):
+    def __init__(self, log_file, html_file, text_file, yaml_file, html_log_file):
         self.log_file = log_file
         self.html_file = html_file
         self.text_file = text_file
         self.yaml_file = yaml_file
+        self.html_log_file = html_log_file
 
         self.lineno = 0
         self.kernel_level_pattern = re.compile(r"^\<([0-7])\>")
@@ -75,6 +93,13 @@ class Writer(ContextDecorator):
             "6": "info",
             "7": "debug",
         }
+        # HTML LAVA Logs
+        if self.html_log_file is not None:
+            self.lava_logs_html = open(
+                Path(__file__).parent / "templates/html/lava_logs_base.html"
+            ).read()
+            self.soup = BeautifulSoup(self.lava_logs_html, "html.parser")
+            self.log_container = self.soup.find("div", {"id": "log-container"})
 
     def __enter__(self):
         def fopen(p):
@@ -91,6 +116,8 @@ class Writer(ContextDecorator):
             self.text_file = fopen(self.text_file)
         if self.yaml_file is not None:
             self.yaml_file = fopen(self.yaml_file)
+        if self.html_log_file is not None:
+            self.html_log_file = fopen(self.html_log_file)
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -100,10 +127,13 @@ class Writer(ContextDecorator):
 
         if self.html_file is not None:
             self.html_file.write(HTML_FOOTER)
+        if self.html_log_file is not None:
+            self.html_log_file.write(str(self.soup))
         fclose(self.log_file)
         fclose(self.text_file)
         fclose(self.html_file)
         fclose(self.yaml_file)
+        fclose(self.html_log_file)
 
     def write(self, line):
         line = line.rstrip("\n")
@@ -135,6 +165,9 @@ class Writer(ContextDecorator):
 
         if self.yaml_file is not None:
             self.yaml_file.write("- " + line + "\n")
+
+        if self.html_log_file is not None:
+            self.log_container.append(get_child_div(data))
 
         if data["lvl"] in ["target", "feedback"]:
             if self.text_file is not None:

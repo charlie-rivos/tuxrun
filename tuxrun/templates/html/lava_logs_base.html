@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>TuxTest Raw Log</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #log-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-entry {
+            display: flex;
+            margin-bottom: 5px;
+            margin-left: 5px;
+            align-items: center;
+        }
+
+        .log-entry > div {
+            flex: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .debug { color: #FFFFFF; }
+        .info { color: #e7eb0b; }
+        .warning { color: #FFA500; }
+        .error { color: #ff0000; }
+        .input { color: #eae9e9; }
+        .target { color: #a2e014; }
+        .feedback { color: #26ca42; }
+        .results { color: #5bdef0; white-space: pre-line; }
+    </style>
+</head>
+<body>
+<div align="right">
+    <button onclick="filterLogs('debug')">Debug</button>
+    <button onclick="filterLogs('info')">Info</button>
+    <button onclick="filterLogs('warning')">Warning</button>
+    <button onclick="filterLogs('error')">Error</button>
+    <button onclick="filterLogs('input')">Input</button>
+    <button onclick="filterLogs('target')">Output</button>
+    <button onclick="filterLogs('feedback')">Feedback</button>
+    <button onclick="filterLogs('results')">Results</button>
+    <button onclick="filterLogs('all')">Show All</button>
+</div>
+
+
+    <pre>
+    <div id="log-container">
+        <!-- Add log entries as needed -->
+
+    </div>
+    <pre>
+
+    <script>
+        function filterLogs(level) {
+            const logEntries = document.querySelectorAll('.log-entry');
+
+            logEntries.forEach((logEntry) => {
+                const entryLevel = logEntry.getAttribute('log-level');
+                const shouldShow = level === 'all' || entryLevel === level;
+
+                logEntry.classList.toggle('hidden', !shouldShow);
+            });
+        }
+    </script>
+
+</body>
+</html>
