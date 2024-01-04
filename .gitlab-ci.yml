@@ -34,8 +34,6 @@ ci-image-integration:
   - 'docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY'
   - 'docker push $CI_REGISTRY_IMAGE/ci-integration'
   only:
-    refs:
-    - master
     changes:
     - Dockerfile.ci-integration
 
