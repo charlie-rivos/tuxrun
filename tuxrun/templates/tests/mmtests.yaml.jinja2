@@ -9,7 +9,7 @@
       path: automated/linux/mmtests/mmtests.yaml
       parameters:
         SKIP_INSTALL: 'true'
-        MMTESTS_CONFIG_FILE: '{{ configfile }}'
+        MMTESTS_CONFIG_FILE: '{{ config_file }}'
         MMTEST_ITERATIONS: '{{ parameters.get("ITERATIONS", iterations) }}'
         TEST_DIR: '{{ parameters.get("MMTESTS_PATH", "/mmtests") }}'
         FULL_ARCHIVE: '{{ parameters.get("FULL_ARCHIVE", "False")|lower }}'

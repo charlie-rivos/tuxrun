@@ -6,3 +6,5 @@
 *.swp
 docs/index.md
 /tags
+.idea/
+.code/
