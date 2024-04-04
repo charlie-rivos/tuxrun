@@ -34,6 +34,10 @@ from tuxrun.utils import ProgressIndicator, get_new_output_dir, mask_secrets, no
 from tuxrun.writer import Writer
 from tuxrun.yaml import yaml_load
 
+# TODO this should not be needed if the tuxmake RPM manages to provide a public
+# Python module that is not tied to a specific Python version
+sys.path.append("/usr/share/tuxmake")
+
 
 ###########
 # GLobals #

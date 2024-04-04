@@ -39,3 +39,14 @@ tags:
 	ctags -R tuxrun/ test/
 
 release: integration
+
+rpm-sanity-check-prepare::
+	printf '[tuxmake]\nname=tuxmake\ntype=rpm-md\nbaseurl=https://tuxmake.org/packages/\ngpgcheck=1\ngpgkey=https://tuxmake.org/packages/repodata/repomd.xml.key\nenabled=1\n' > /etc/yum.repos.d/tuxmake.repo
+
+deb-sanity-check-prepare::
+	apt-get update
+	apt-get install -qy ca-certificates
+	/usr/lib/apt/apt-helper download-file https://tuxmake.org/packages/signing-key.gpg /etc/apt/trusted.gpg.d/tuxmake.gpg
+	echo 'deb https://tuxmake.org/packages/ ./' > /etc/apt/sources.list.d/tuxmake.list
+	echo 'deb http://deb.debian.org/debian bullseye contrib' > /etc/apt/sources.list.d/contrib.list
+	apt-get update
