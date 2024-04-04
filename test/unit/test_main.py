@@ -61,11 +61,21 @@ def lava_run_call(mocker):
 
 
 @pytest.fixture
+def runtime_prepare(mocker):
+    from tuxmake.runtime import ContainerRuntime
+
+    check_output = mocker.patch("subprocess.check_output")
+    mocker.patch("subprocess.run")
+    mocker.patch.object(ContainerRuntime, "prepare_image")
+    return check_output
+
+
+@pytest.fixture
 def lava_run(lava_run_call, mocker):
     mocker.patch("tuxrun.results.Results.ret", return_value=0)
     proc = lava_run_call.return_value
+    proc.returncode = 0
     proc.wait.return_value = 0
-    proc.communicate.return_value = (mocker.MagicMock(), mocker.MagicMock())
     return proc
 
 
@@ -86,8 +96,8 @@ def test_main_usage(monkeypatch, capsys, run):
     assert "usage: tuxrun" in err
 
 
-def test_almost_real_run(monkeypatch, tuxrun_args, lava_run, capsys):
-    lava_run.stderr = [
+def test_almost_real_run(monkeypatch, tuxrun_args, lava_run, capsys, runtime_prepare):
+    lava_run.stdout = [
         '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513"}\n'
     ]
     exitcode = main()
@@ -338,8 +348,10 @@ def test_command_line_parameters(monkeypatch, mocker, artefacts):
     assert run.call_args[0][0].parameters == {"USERDATA": "http://userdata.tar.xz"}
 
 
-def test_almost_real_run_generate(tuxrun_args_generate, lava_run, capsys):
-    lava_run.stderr = [
+def test_almost_real_run_generate(
+    tuxrun_args_generate, lava_run, capsys, runtime_prepare
+):
+    lava_run.stdout = [
         '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513"}\n'
     ]
     exitcode = main()
@@ -348,8 +360,10 @@ def test_almost_real_run_generate(tuxrun_args_generate, lava_run, capsys):
     assert "Hello, world" in stdout
 
 
-def test_ignores_empty_line_from_lava_run_stdout(tuxrun_args, lava_run):
-    lava_run.stderr = [
+def test_ignores_empty_line_from_lava_run_stdout(
+    tuxrun_args, lava_run, runtime_prepare
+):
+    lava_run.stdout = [
         '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513"}\n',
         "",
         '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:26.139513"}\n',
@@ -358,10 +372,12 @@ def test_ignores_empty_line_from_lava_run_stdout(tuxrun_args, lava_run):
     assert exitcode == 0
 
 
-def test_ignores_empty_line_from_lava_run_logfile(tuxrun_args, lava_run, tmp_path):
+def test_ignores_empty_line_from_lava_run_logfile(
+    tuxrun_args, lava_run, tmp_path, runtime_prepare
+):
     log = tmp_path / "log.yaml"
     tuxrun_args += ["--log-file-yaml", str(log)]
-    lava_run.stderr = [
+    lava_run.stdout = [
         '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:25.139513"}\n',
         "",
         '{"lvl": "info", "msg": "Hello, world", "dt": "2021-04-08T18:42:26.139513"}\n',
@@ -373,11 +389,11 @@ def test_ignores_empty_line_from_lava_run_logfile(tuxrun_args, lava_run, tmp_pat
     assert type(logdata[1]) is dict
 
 
-def test_exit_status_is_0_on_success(tuxrun_args, lava_run):
+def test_exit_status_is_0_on_success(tuxrun_args, lava_run, runtime_prepare):
     assert main() == 0
 
 
-def test_exit_status_matches_results(tuxrun_args, lava_run, mocker):
+def test_exit_status_matches_results(tuxrun_args, lava_run, mocker, runtime_prepare):
     mocker.patch("tuxrun.results.Results.ret", return_value=1)
     assert main() == 1
 
@@ -568,7 +584,9 @@ def test_invalid_tuxmake_directory(monkeypatch, tmp_path, capsys):
     assert "metadata.json" in err
 
 
-def test_modules(monkeypatch, lava_run_call, lava_run, artefacts):
+def test_modules(
+    mocker, monkeypatch, lava_run_call, lava_run, artefacts, runtime_prepare
+):
     monkeypatch.setattr(
         "sys.argv",
         [
@@ -580,11 +598,12 @@ def test_modules(monkeypatch, lava_run_call, lava_run, artefacts):
     )
     assert main() == 0
     lava_run_call.assert_called()
-    args = lava_run_call.call_args[0][0]
-    assert f"{artefacts}/foo.tar.xz:{artefacts}/foo.tar.xz:ro" in args
+    runtime_prepare.assert_called()
+    args = runtime_prepare.call_args[0][0]
+    assert f"--volume={artefacts}/foo.tar.xz:{artefacts}/foo.tar.xz:ro,z" in args
 
 
-def test_shared(monkeypatch, lava_run_call, lava_run, artefacts):
+def test_shared(monkeypatch, lava_run_call, lava_run, artefacts, runtime_prepare):
     monkeypatch.setattr(
         "sys.argv",
         [
@@ -596,9 +615,10 @@ def test_shared(monkeypatch, lava_run_call, lava_run, artefacts):
     )
     assert main() == 0
     lava_run_call.assert_called()
-    args = lava_run_call.call_args[0][0]
+    runtime_prepare.assert_called()
+    args = runtime_prepare.call_args[0][0]
     assert (
-        f"{artefacts}/home/.cache/tuxrun/tests/1:{artefacts}/home/.cache/tuxrun/tests/1:rw"
+        f"--volume={artefacts}/home/.cache/tuxrun/tests/1:{artefacts}/home/.cache/tuxrun/tests/1:rw,z"
         in args
     )
 
@@ -614,8 +634,9 @@ def test_shared(monkeypatch, lava_run_call, lava_run, artefacts):
     )
     assert main() == 0
     lava_run_call.assert_called()
-    args = lava_run_call.call_args[0][0]
-    assert "/home/:/home/:rw" in args
+    runtime_prepare.assert_called()
+    args = runtime_prepare.call_args[0][0]
+    assert "--volume=/home/:/home/:rw,z" in args
 
     monkeypatch.setattr(
         "sys.argv",
@@ -630,11 +651,12 @@ def test_shared(monkeypatch, lava_run_call, lava_run, artefacts):
     )
     assert main() == 0
     lava_run_call.assert_called()
-    args = lava_run_call.call_args[0][0]
-    assert "/home/:/home/:rw" in args
+    runtime_prepare.assert_called()
+    args = runtime_prepare.call_args[0][0]
+    assert "--volume=/home/:/home/:rw,z" in args
 
 
-def test_overlays(monkeypatch, lava_run_call, lava_run, artefacts):
+def test_overlays(monkeypatch, lava_run_call, lava_run, artefacts, runtime_prepare):
     monkeypatch.setattr(
         "sys.argv",
         [
@@ -647,9 +669,13 @@ def test_overlays(monkeypatch, lava_run_call, lava_run, artefacts):
     )
     assert main() == 0
     lava_run_call.assert_called()
-    args = lava_run_call.call_args[0][0]
-    assert f"{artefacts}/stuff.tar.gz:{artefacts}/stuff.tar.gz:ro" in args
-    assert f"{artefacts}/morestuff.tar.gz:{artefacts}/morestuff.tar.gz:ro" in args
+    runtime_prepare.assert_called()
+    args = runtime_prepare.call_args[0][0]
+    assert f"--volume={artefacts}/stuff.tar.gz:{artefacts}/stuff.tar.gz:ro,z" in args
+    assert (
+        f"--volume={artefacts}/morestuff.tar.gz:{artefacts}/morestuff.tar.gz:ro,z"
+        in args
+    )
 
 
 def test_custom_commands(monkeypatch, run):
@@ -729,7 +755,7 @@ def test_update_cache(mocker, monkeypatch, capsys):
     )
 
 
-def test_save_results_json(tuxrun_args, lava_run, mocker, tmp_path):
+def test_save_results_json(tuxrun_args, lava_run, mocker, tmp_path, runtime_prepare):
     json = tmp_path / "results.json"
     tuxrun_args += [f"--results={json}"]
     main()
@@ -811,7 +837,10 @@ def overlay_subprocess_calls(mocker):
     return mocker.patch("subprocess.check_output", new=my_outputs)
 
 
-def test_qemu_overlay(tuxrun_args_qemu_overlay, lava_run, overlay_subprocess_calls):
+def test_qemu_overlay(
+    mocker, tuxrun_args_qemu_overlay, lava_run, overlay_subprocess_calls
+):
+    mocker.patch("tuxrun.runtimes.Runtime.prepare")
     main()
 
 

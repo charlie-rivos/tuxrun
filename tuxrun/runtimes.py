@@ -4,33 +4,49 @@
 #
 # SPDX-License-Identifier: MIT
 
-import contextlib
 import logging
 import os
-import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 from tuxrun.templates import wrappers
 
+# Tuxmake Runtime
+from tuxmake.runtime import Runtime as TuxmakeRuntime
+
 BASE = (Path(__file__) / "..").resolve()
 LOG = logging.getLogger("tuxrun")
+
+
+def run_hacking_sesson(definition, case, test):
+    if definition == "hacking-session" and case == "tmate" and "reference" in test:
+        if sys.stdout.isatty():
+            subprocess.Popen(
+                [
+                    "xterm",
+                    "-e",
+                    "bash",
+                    "-c",
+                    f"ssh {test['reference']}",
+                ]
+            )
 
 
 class Runtime:
     binary = ""
     container = False
-    prefix = [""]
+    network = None
 
     def __init__(self):
+        self._runtime = TuxmakeRuntime.get(self.binary)
         self.__bindings__ = []
-        self.__image__ = None
-        self.__name__ = None
         self.__pre_proc__ = None
-        self.__proc__ = None
-        self.__sub_procs__ = []
-        self.__ret__ = None
+        self.writer = None
+        self.results = None
+        self.network = None
+        self.hacking_session = False
 
     @classmethod
     def select(cls, name):
@@ -46,10 +62,7 @@ class Runtime:
         self.__bindings__.append((str(src), dst, ro, device))
 
     def image(self, image):
-        self.__image__ = image
-
-    def name(self, name):
-        self.__name__ = name
+        self._runtime.set_image(image)
 
     def pre_run(self, tmpdir):
         pass
@@ -57,48 +70,34 @@ class Runtime:
     def post_run(self):
         pass
 
-    def cmd(self, args):
+    def add_bindings(self):
         raise NotImplementedError()  # pragma: no cover
 
-    @contextlib.contextmanager
-    def run(self, args):
-        args = self.cmd(args)
+    def logger(self, line):
+        if line:
+            self.writer.write(line)
+            res = self.results.parse(line)
+            # Start an xterm if an hacking session url is available
+            if self.hacking_session and res:
+                run_hacking_sesson(*res)
+
+    def run(self, args, logger=None):
         LOG.debug("Calling %s", " ".join(args))
-        try:
-            self.__proc__ = subprocess.Popen(
-                args,
-                bufsize=1,
-                stderr=subprocess.PIPE,
-                text=True,
-                preexec_fn=os.setpgrp,
-            )
-            yield
-        except FileNotFoundError as exc:
-            LOG.error("File not found '%s'", exc.filename)
-            raise
-        except Exception as exc:
-            LOG.exception(exc)
-            if self.__proc__ is not None:
-                self.kill()
-                _, errs = self.__proc__.communicate()
-                for err in [e for e in errs.split("\n") if e]:
-                    LOG.error("err: %s", err)
-            raise
-        finally:
-            if self.__proc__ is not None:
-                self.__ret__ = self.__proc__.wait()
-            for proc in self.__sub_procs__:
-                proc.wait()
+        return self._runtime.run_cmd(args, offline=False, logger=logger, echo=False)
 
-    def lines(self):
-        return self.__proc__.stderr
+    def prepare(self, writer, results, hacking_session=False):
+        self.writer = writer
+        self.results = results
+        self.hacking_session = hacking_session
 
-    def kill(self):
-        if self.__proc__:
-            self.__proc__.send_signal(signal.SIGTERM)
+        self._runtime.network = self.network
+        self._runtime.allow_user_opts = False
+        self._runtime.prepare()
 
-    def ret(self):
-        return self.__ret__
+    def cleanup(self):
+        if self._runtime:
+            self._runtime.cleanup()
+            self._runtime = None
 
 
 class ContainerRuntime(Runtime):
@@ -118,8 +117,7 @@ class ContainerRuntime(Runtime):
             guestfs.mkdir(exist_ok=True)
             self.bind(guestfs, "/var/tmp/.guestfs-0")
 
-    def cmd(self, args):
-        prefix = self.prefix.copy()
+    def add_bindings(self):
         srcs = set()
         dsts = set()
         for binding in self.__bindings__:
@@ -132,21 +130,7 @@ class ContainerRuntime(Runtime):
                 raise Exception("Duplicated mount destination %r" % dst)
             srcs.add(src)
             dsts.add(dst)
-            ro = "ro" if ro else "rw"
-            prefix.extend(["--device" if device else "-v", f"{src}:{dst}:{ro}"])
-        prefix.extend(["--name", self.__name__])
-        return prefix + [self.__image__] + args
-
-    def kill(self):
-        args = [self.binary, "stop", "--time", "60", self.__name__]
-        with contextlib.suppress(FileNotFoundError):
-            proc = subprocess.Popen(
-                args,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                preexec_fn=os.setpgrp,
-            )
-            self.__sub_procs__.append(proc)
+            self._runtime.add_volume(src, dst, ro=ro, device=device)
 
 
 class DockerRuntime(ContainerRuntime):
@@ -154,7 +138,6 @@ class DockerRuntime(ContainerRuntime):
     # "security: cached appliance /var/tmp/.guestfs-0 is not owned by UID 0"
     bind_guestfs = False
     binary = "docker"
-    prefix = ["docker", "run", "--rm", "--hostname", "tuxrun"]
 
     def pre_run(self, tmpdir):
         # Render and bind the docker wrapper
@@ -175,13 +158,11 @@ class DockerRuntime(ContainerRuntime):
 
 class PodmanRuntime(ContainerRuntime):
     binary = "podman"
-    prefix = ["podman", "run", "--log-driver=none", "--rm", "--hostname", "tuxrun"]
     network = None
 
     def pre_run(self, tmpdir):
         # Render and bind the docker wrapper
         self.network = os.path.basename(tmpdir)
-        self.prefix.extend(["--network", self.network])
         subprocess.run(["podman", "network", "create", self.network])
         wrap = (
             wrappers()
@@ -225,7 +206,7 @@ class PodmanRuntime(ContainerRuntime):
 
     def post_run(self):
         if self.network:
-            subprocess.run(["podman", "network", "rm", self.network])
+            subprocess.call([self.binary, "network", "rm", self.network])
         if self.__pre_proc__ is None:
             return
         self.__pre_proc__.kill()
@@ -233,5 +214,5 @@ class PodmanRuntime(ContainerRuntime):
 
 
 class NullRuntime(Runtime):
-    def cmd(self, args):
-        return args
+    def add_bindings(self):
+        pass
