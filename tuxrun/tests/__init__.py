@@ -68,4 +68,5 @@ import tuxrun.tests.perf  # noqa: E402,F401
 import tuxrun.tests.rcutorture  # noqa: E402,F401
 import tuxrun.tests.v4l2  # noqa: E402,F401
 import tuxrun.tests.vdso  # noqa: E402,F401
+import tuxrun.tests.rttests  # noqa: E402,F401
 import tuxrun.tests.xfstests  # noqa: E402,F401
