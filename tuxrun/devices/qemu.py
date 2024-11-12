@@ -121,15 +121,6 @@ class QemuDevice(Device):
         else:
             kwargs["tux_prompt"] = []
 
-        if "cpu.lpa2" in kwargs.get("parameters").keys() and kwargs["parameters"].get(
-            "cpu.lpa2"
-        ) in ["off", "on"]:
-            if self.name not in ["qemu-arm64", "qemu-arm64be"]:
-                raise InvalidArgument(
-                    "argument '--parameters cpu.lpa2=on/off' is only valid for qemu-arm64 and qemu-arm64be device"
-                )
-            kwargs["cpu"] += f',lpa2={kwargs["parameters"]["cpu.lpa2"]}'
-
         kwargs["command_name"] = slugify(
             kwargs.get("parameters").get("command-name", "command")
         )
@@ -187,6 +178,19 @@ class QemuArm64(QemuDevice):
 
         if enable_trustzone:
             self.machine = f"{self.machine},secure=on"
+
+    def arch_customization(self, kwargs):
+        """
+        cpu.lpa2 defaults to on in QEMU, for kernel version <= 5.4, cpu.lpa2
+        needs to be set to off.
+        """
+        if "cpu.lpa2" not in kwargs.get("parameters").keys():
+            return
+
+        if kwargs["parameters"]["cpu.lpa2"] not in ["off", "on"]:
+            return
+
+        kwargs["cpu"] += f',lpa2={kwargs["parameters"]["cpu.lpa2"]}'
 
 
 class QemuArm64BE(QemuArm64):
