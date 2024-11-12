@@ -237,6 +237,21 @@ class QemuArmv7(QemuDevice):
     kernel = "https://storage.tuxboot.com/buildroot/armv7/zImage"
     rootfs = "https://storage.tuxboot.com/buildroot/armv7/rootfs.ext4.zst"
 
+    def arch_customization(self, kwargs):
+        """
+        We need to make sure that armv7 machines use up to <= 3G of RAM
+        """
+        if "machine.highmem" not in kwargs.get("parameters").keys():
+            return
+
+        if kwargs["parameters"]["machine.highmem"] not in ["off", "on"]:
+            return
+
+        kwargs["machine"] += f',highmem={kwargs["parameters"]["machine.highmem"]}'
+        if "highmem=off" in kwargs["machine"]:
+            self.memory = "3G"
+            kwargs["memory"] = self.memory
+
 
 class QemuArmv7BE(QemuArmv7):
     name = "qemu-armv7be"
