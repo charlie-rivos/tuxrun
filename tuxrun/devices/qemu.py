@@ -88,6 +88,9 @@ class QemuDevice(Device):
         options.kernel = notnone(options.kernel, self.kernel)
         options.rootfs = notnone(options.rootfs, self.rootfs)
 
+    def arch_customization(self, kwargs):
+        pass
+
     def definition(self, **kwargs):
         kwargs = kwargs.copy()
 
@@ -130,6 +133,8 @@ class QemuDevice(Device):
         kwargs["command_name"] = slugify(
             kwargs.get("parameters").get("command-name", "command")
         )
+
+        self.arch_customization(kwargs)
 
         # render the template
         tests = [
