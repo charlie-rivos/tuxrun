@@ -404,9 +404,7 @@ class QemuRiscV32(QemuDevice):
 
     console = "ttyS0"
     rootfs_dev = "/dev/vda"
-    rootfs_arg = (
-        "-drive file={rootfs},format=raw,id=hd0,if=virtio"
-    )
+    rootfs_arg = "-drive file={rootfs},format=raw,id=hd0,if=virtio"
 
     bios = "https://storage.tuxboot.com/buildroot/riscv32/fw_jump.elf"
     kernel = "https://storage.tuxboot.com/buildroot/riscv32/Image"
@@ -425,9 +423,7 @@ class QemuRiscV64(QemuDevice):
 
     console = "ttyS0"
     rootfs_dev = "/dev/vda"
-    rootfs_arg = (
-        "-drive file={rootfs},format=raw,id=hd0,if=virtio"
-    )
+    rootfs_arg = "-drive file={rootfs},format=raw,id=hd0,if=virtio"
 
     kernel = "https://storage.tuxboot.com/buildroot/riscv64/Image"
     rootfs = "https://storage.tuxboot.com/buildroot/riscv64/rootfs.ext4.zst"
@@ -445,9 +441,7 @@ class QemuS390(QemuDevice):
 
     console = "ttyS0"
     rootfs_dev = "/dev/vda net.ifnames=0"
-    rootfs_arg = (
-        "-drive file={rootfs},if=none,format=raw,id=hd0,if=virtio"
-    )
+    rootfs_arg = "-drive file={rootfs},if=none,format=raw,id=hd0,if=virtio"
 
     kernel = "https://storage.tuxboot.com/buildroot/s390/bzImage"
     rootfs = "https://storage.tuxboot.com/buildroot/s390/rootfs.ext4.zst"
