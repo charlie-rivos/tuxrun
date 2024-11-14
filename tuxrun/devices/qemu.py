@@ -232,7 +232,7 @@ class QemuArmv7(QemuDevice):
 
     console = "ttyAMA0"
     rootfs_dev = "/dev/vda"
-    rootfs_arg = "-drive file={rootfs},if=none,format=raw,id=hd0,if=virtio"
+    rootfs_arg = "-drive file={rootfs},if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0"
 
     kernel = "https://storage.tuxboot.com/buildroot/armv7/zImage"
     rootfs = "https://storage.tuxboot.com/buildroot/armv7/rootfs.ext4.zst"
