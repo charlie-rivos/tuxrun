@@ -999,6 +999,10 @@ def artefacts(tmp_path):
             "qemu-arm64-systemd-analyze.yaml",
         ),
         (
+            ["--device", "qemu-arm64", "--parameters", "cpu.lpa2=on"],
+            "qemu-arm64-arch-customization.yaml",
+        ),
+        (
             ["--device", "qemu-arm64be"],
             "qemu-arm64be.yaml",
         ),
@@ -1087,6 +1091,14 @@ def artefacts(tmp_path):
         (
             ["--device", "qemu-armv7", "--kernel", "zImage.xz"],
             "qemu-armv7-kernel-xz.yaml",
+        ),
+        (
+            ["--device", "qemu-armv7", "--parameters", "machine.highmem=off"],
+            "qemu-armv7-arch-customization.yaml",
+        ),
+        (
+            ["--device", "qemu-armv7", "--parameters", "machine.highmem=on"],
+            "qemu-armv7-arch-customization-highmem.yaml",
         ),
         (
             ["--device", "qemu-armv7be"],
