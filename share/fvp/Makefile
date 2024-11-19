@@ -1,12 +1,12 @@
 LAVA_IMAGE ?= ""
 RUNTIME ?= "podman"
 
-aemva_version ?= "11.24_11"
+aemva_version ?= "11.27_19"
 ifeq ($(shell uname -m),aarch64)
-aemva_version_sha256 ?= "7a3593dafd3af6897b3a0a68f66701201f8f3e02a3d981ba47494b2f18853648"
+aemva_version_sha256 ?= "66c9939cb2b2104e415dcddb46a2ab52168e8a2b7f30a339e1c05d5d4864ed1d"
 aemva_arch = "Linux64_armv8l"
 else
-aemva_version_sha256 ?= "0f132334834cbc66889a62dd72057c976d7c7dfcfeec21799e9c78fb2ce24720"
+aemva_version_sha256 ?= "cd70946a6b632950dca5def33d7656991a29827fa2f6f72f75011d85bdcee248"
 aemva_arch = "Linux64"
 endif
 morello_version ?= "0.11_34"

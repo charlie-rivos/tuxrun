@@ -21,8 +21,9 @@ RUN set -ex ;\
     apt install --yes ca-certificates ;\
     apt install -q=2 --yes --no-install-recommends ${PKG_DEPS} ;\
     # Install the FVP model
+    version_major=$(echo "$version" | cut -d '_' -f 1) && \
     curl --connect-timeout 5 --retry 5 --retry-delay 1 -fsSLo /tmp/fvp.tgz \
-    "https://developer.arm.com/-/media/Files/downloads/ecosystem-models/FVP_Base_RevC-2xAEMvA_${version}_${arch}.tgz" ;\
+    "https://developer.arm.com/-/cdn-downloads/permalink/Fixed-Virtual-Platforms/FM-${version_major}/FVP_Base_RevC-2xAEMvA_${version}_${arch}.tgz" ;\
     echo "${version_sha256} /tmp/fvp.tgz" | sha256sum --check -;\
     tar xf /tmp/fvp.tgz -C /tmp ;\
     mkdir -p /opt/model/FVP_AEMvA/ ; \
