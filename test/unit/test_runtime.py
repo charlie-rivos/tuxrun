@@ -1,10 +1,9 @@
-import os
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from tuxrun.runtimes import DockerRuntime, NullRuntime, PodmanRuntime, Runtime
+from tuxmake.exceptions import RuntimeNotFoundError
 
 
 def test_select():
@@ -13,98 +12,72 @@ def test_select():
     assert Runtime.select("podman") == PodmanRuntime
 
 
-def test_cmd_null():
-    runtime = Runtime.select("null")()
-    assert runtime.cmd(["hello", "world"]) == ["hello", "world"]
-
-    runtime.bind("/hello/world")
-    assert runtime.cmd(["hello", "world"]) == ["hello", "world"]
+def test_image():
+    runtime = Runtime.select("docker")()
+    runtime.image("test")
+    assert runtime._runtime.get_image() == "test"
 
 
-def test_cmd_podman():
+def test_prepare(mocker):
+    runtime = Runtime.select("docker")()
+    runtime.image("test_image")
+    runtime.network = "test_network"
+    mocker.patch.object(runtime._runtime, "prepare")
+    runtime.prepare("writer_obj", "results_obj")
+    assert runtime.writer == "writer_obj"
+    assert runtime.results == "results_obj"
+    assert runtime._runtime.get_image() == "test_image"
+    assert runtime._runtime.network == "test_network"
+
+
+def test_cleanup(mocker):
     runtime = Runtime.select("podman")()
-    runtime.name("name")
-    runtime.image("image")
-    args = [
-        "podman",
-        "run",
-        "--log-driver=none",
-        "--rm",
-        "--hostname",
-        "tuxrun",
-        "-v",
-        "/boot:/boot:ro",
-        "-v",
-        "/lib/modules:/lib/modules:ro",
-    ]
+    runtime.container_id = "test_id"
+    cleanup_mock = mocker.patch.object(runtime._runtime, "cleanup")
+    assert runtime._runtime.name == "podman"
+    runtime.cleanup()
+    assert runtime._runtime is None
+    assert cleanup_mock.call_count == 1
+
+
+def test_add_bindings(mocker):
+    runtime = Runtime.select("docker")()
+    vol_mock = mocker.patch.object(runtime._runtime, "add_volume")
+    bindings = runtime.__bindings__
+    for item in [
+        ("/boot", "/boot", True, False),
+        ("/lib/modules", "/lib/modules", True, False),
+    ]:
+        assert item in bindings
     if Path("/dev/kvm").exists():
-        args.extend(
-            [
-                "--device",
-                "/dev/kvm:/dev/kvm:rw",
-            ]
-        )
-    if Path(f"/var/tmp/.guestfs-{os.getuid()}").exists():
-        args.extend(
-            [
-                "-v",
-                f"/var/tmp/.guestfs-{os.getuid()}:/var/tmp/.guestfs-0:rw",
-            ]
-        )
-    assert runtime.cmd(["hello", "world"]) == args + [
-        "--name",
-        "name",
-        "image",
-        "hello",
-        "world",
-    ]
+        assert ("/dev/kvm", "/dev/kvm", False, True) in bindings
+    # case: with ro=True
+    bind = "/test/bind"
+    runtime.bind(bind, ro=True)
+    runtime.add_bindings()
+    assert (bind, bind, True, False) in bindings
+    assert vol_mock.call_count == len(bindings)
 
-    runtime.bind("/hello/world")
-    assert runtime.cmd(["hello", "world"]) == args + [
-        "-v",
-        "/hello/world:/hello/world:rw",
-        "--name",
-        "name",
-        "image",
-        "hello",
-        "world",
-    ]
+    # case: Exception with duplicated binding
+    runtime.bind(bind, device=True)
+    with pytest.raises(Exception):
+        runtime.add_bindings()
 
 
-def test_kill_null(mocker):
-    runtime = Runtime.select("null")()
-    runtime.__proc__ = None
-    runtime.kill()
-
-    runtime.__proc__ = mocker.MagicMock()
-    runtime.kill()
-    runtime.__proc__.send_signal.assert_called_once_with(15)
-
-
-def test_kill_podman(mocker):
-    popen = mocker.patch("subprocess.Popen")
+def test_podman_not_installed(mocker):
+    mocker.patch("subprocess.Popen", side_effect=FileNotFoundError)
     runtime = Runtime.select("podman")()
-    runtime.kill()
-    popen.assert_called_once_with(
-        ["podman", "stop", "--time", "60", None],
-        stderr=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        preexec_fn=os.setpgrp,
-    )
-    assert len(runtime.__sub_procs__) == 1
+    with pytest.raises(RuntimeNotFoundError) as e:
+        runtime.prepare(None, None)
+    assert "Runtime not installed: podman" in str(e.value)
 
 
-def test_kill_podman_raise(mocker):
-    popen = mocker.patch("subprocess.Popen", side_effect=FileNotFoundError)
-    runtime = Runtime.select("podman")()
-    runtime.kill()
-    popen.assert_called_once_with(
-        ["podman", "stop", "--time", "60", None],
-        stderr=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        preexec_fn=os.setpgrp,
-    )
-    assert len(runtime.__sub_procs__) == 0
+def test_docker_not_installed(mocker):
+    mocker.patch("subprocess.Popen", side_effect=FileNotFoundError)
+    runtime = Runtime.select("docker")()
+    with pytest.raises(RuntimeNotFoundError) as e:
+        runtime.prepare(None, None)
+    assert "Runtime not installed: docker" in str(e.value)
 
 
 def test_pre_run_docker(tmp_path):
@@ -169,20 +142,15 @@ def test_run(mocker):
     popen = mocker.patch("subprocess.Popen")
 
     runtime = Runtime.select("podman")()
-    runtime.name("name")
     runtime.image("image")
-    with runtime.run(["hello", "world"]):
-        popen.assert_called_once()
-        assert runtime.__proc__ is not None
-        assert runtime.__ret__ is None
-    runtime.__proc__.wait.assert_called_once()
+    runtime.run(["hello", "world"])
+    popen.assert_called_once()
 
 
-def test_run_errors(mocker, tmp_path):
+def test_run_errors(mocker):
     popen = mocker.patch("subprocess.Popen", side_effect=FileNotFoundError)
 
     runtime = Runtime.select("podman")()
-    runtime.name("name")
     runtime.image("image")
     with pytest.raises(FileNotFoundError):
         with runtime.run(["hello", "world"]):
@@ -191,7 +159,6 @@ def test_run_errors(mocker, tmp_path):
 
     popen = mocker.patch("subprocess.Popen", side_effect=Exception)
     runtime = Runtime.select("podman")()
-    runtime.name("name")
     runtime.image("image")
     with pytest.raises(Exception):
         with runtime.run(["hello", "world"]):
@@ -202,24 +169,20 @@ def test_run_errors(mocker, tmp_path):
     popen = mocker.patch("subprocess.Popen", side_effect=FileNotFoundError)
 
     runtime = Runtime.select("podman")()
-    runtime.name("name")
     runtime.image("image")
     runtime.bind("/hello", "/world")
     runtime.bind("/hello", "/world2")
     with pytest.raises(Exception) as exc:
-        with runtime.run(["hello", "world"]):
-            pass
+        runtime.add_bindings()
     assert exc.match("Duplicated mount source '/hello'")
     popen.assert_not_called()
 
     # Test duplicated destination bindings
     runtime = Runtime.select("podman")()
-    runtime.name("name")
     runtime.image("image")
     runtime.bind("/hello", "/world")
     runtime.bind("/hello2", "/world")
     with pytest.raises(Exception) as exc:
-        with runtime.run(["hello", "world"]):
-            pass
+        runtime.add_bindings()
     assert exc.match("Duplicated mount destination '/world'")
     popen.assert_not_called()

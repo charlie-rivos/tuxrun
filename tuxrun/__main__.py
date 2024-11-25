@@ -33,6 +33,11 @@ from tuxrun.utils import ProgressIndicator, get_new_output_dir, mask_secrets, no
 from tuxrun.writer import Writer
 from tuxrun.yaml import yaml_load
 
+# TODO this should not be needed if the tuxmake RPM manages to provide a public
+# Python module that is not tied to a specific Python version
+sys.path.append("/usr/share/tuxmake")
+
+
 ###########
 # GLobals #
 ###########
@@ -148,20 +153,6 @@ def run_hooks(hooks, cwd):
     return 0
 
 
-def run_hacking_sesson(definition, case, test):
-    if definition == "hacking-session" and case == "tmate" and "reference" in test:
-        if sys.stdout.isatty():
-            subprocess.Popen(
-                [
-                    "xterm",
-                    "-e",
-                    "bash",
-                    "-c",
-                    f"ssh {test['reference']}",
-                ]
-            )
-
-
 ##############
 # Entrypoint #
 ##############
@@ -273,7 +264,6 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path], artefacts: dict) -> in
 
     # Use a container runtime
     runtime = Runtime.select(options.runtime)()
-    runtime.name(tmpdir.name)
     runtime.image(options.image)
 
     runtime.bind(tmpdir)
@@ -306,7 +296,7 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path], artefacts: dict) -> in
     # Forward the signal to the runtime
     def handler(*_):
         LOG.debug("Signal received")
-        runtime.kill()
+        runtime.cleanup()
 
     signal.signal(signal.SIGHUP, handler)
     signal.signal(signal.SIGINT, handler)
@@ -350,15 +340,11 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path], artefacts: dict) -> in
         options.log_file_text,
         options.log_file_yaml,
     ) as writer:
-        # Start the runtime
-        with runtime.run(args):
-            for line in runtime.lines():
-                writer.write(line)
-                res = results.parse(line)
-                # Start an xterm if an hacking session url is available
-                if hacking_session and res:
-                    run_hacking_sesson(*res)
+        runtime.add_bindings()
+        runtime.prepare(writer, results, hacking_session)
+        ret = runtime.run(args, logger=runtime.logger)
 
+    runtime.cleanup()
     runtime.post_run()
     if options.results:
         if str(options.results) == "-":
@@ -381,7 +367,7 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path], artefacts: dict) -> in
     # Run results-hooks only if everything was successful
     if cache_dir:
         print(f"TuxRun outputs saved to {cache_dir}")
-    return max([runtime.ret(), results.ret()]) or run_hooks(
+    return max([int(not ret), results.ret()]) or run_hooks(
         options.results_hooks, cache_dir
     )
 
