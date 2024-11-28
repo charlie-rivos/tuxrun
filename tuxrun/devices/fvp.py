@@ -293,8 +293,17 @@ class FVPLAVA(FVPDevice):
                 raise InvalidArgument("Unable to load LAVA job definition")
         return
 
-    def default(self, options) -> None:
-        ...
+    def default(self, options) -> None: ...
 
     def definition(self, **kwargs):
         return self.job_definition
+
+    def environment(self):
+        env = {
+            "purge": True,
+            "overrides": {
+                "LD_LIBRARY_PATH": "/opt/model/FVP_Corstone_SSE-320/python/lib",
+            },
+        }
+        self.dut_env = yaml.dump(env)
+        return self.dut_env
