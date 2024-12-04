@@ -402,6 +402,7 @@ class KSelftestMm(KSelfTest):
     name = "kselftest-mm"
     timeout = 15
 
+
 class KSelftestMincore(KSelfTest):
     name = "kselftest-mincore"
     timeout = 5
@@ -468,13 +469,13 @@ class KSelftestNetfilter(KSelfTest):
 
 class KSelftestNetRds(KSelfTest):
     name = "kselftest-net-rds"
-    cmdfile="net.rds"
+    cmdfile = "net.rds"
     timeout = 15
 
 
 class KSelftestNetTcpAo(KSelfTest):
     name = "kselftest-net-tcp_ao"
-    cmdfile="net.tcp_ao"
+    cmdfile = "net.tcp_ao"
     timeout = 15
 
 
