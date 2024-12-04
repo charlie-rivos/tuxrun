@@ -6,3 +6,4 @@
 *.swp
 docs/index.md
 /tags
+coverage.xml
