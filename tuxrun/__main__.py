@@ -256,6 +256,9 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path], artefacts: dict) -> in
 
     (tmpdir / "definition.yaml").write_text(definition, encoding="utf-8")
     (tmpdir / "device.yaml").write_text(device_dict, encoding="utf-8")
+    if options.device.name == "fvp-lava":
+        env_dut = options.device.environment()
+        (tmpdir / "env_dut.yaml").write_text(env_dut, encoding="utf-8")
 
     # Render the dispatcher.yaml
     (tmpdir / "dispatcher").mkdir()
@@ -340,6 +343,9 @@ def run(options, tmpdir: Path, cache_dir: Optional[Path], artefacts: dict) -> in
         "output",
         str(tmpdir / "definition.yaml"),
     ]
+    if options.device.name == "fvp-lava":
+        args.append("--env-dut")
+        args.append(str(tmpdir / "env_dut.yaml"))
 
     results = Results(options.tests, artefacts)
     hacking_session = bool("hacking-session" in t.name for t in options.tests)
