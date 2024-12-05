@@ -33,6 +33,6 @@ publish-pypi:
 	$(flit) publish
 
 tags:
-	ctags -R tuxrun/ test/
+	ctags -R $(PROJECT)/ test/
 
 release: integration
