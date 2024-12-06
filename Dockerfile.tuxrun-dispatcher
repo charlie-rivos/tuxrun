@@ -1,4 +1,4 @@
-FROM registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2024.05.dev0067
+FROM registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2024.09.dev0098
 ARG EXTRA_PACKAGES
 
 RUN apt-get update && \
