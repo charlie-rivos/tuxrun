@@ -17,5 +17,21 @@ requires = [
     "ruamel.yaml",
 ]
 
+[tool.flit.metadata.requires-extra]
+dev = [
+    "black==23.1.0",
+    "codespell",
+    "flake8",
+    "mkdocs",
+    "mkdocs-material",
+    "mypy",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "types-PyYAML",
+    "types-requests",
+    "tuxpkg",
+]
+
 [tool.flit.scripts]
 tuxrun = "tuxrun.__main__:main"
