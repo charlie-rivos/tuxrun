@@ -5,10 +5,7 @@ check: typecheck test spellcheck stylecheck
 
 include $(shell tuxpkg get-makefile)
 
-.PHONY: htmlcov tags
-
-htmlcov:
-	python3 -m pytest --cov=tuxrun --cov-report=html
+.PHONY: tags
 
 stylecheck: style flake8
 
@@ -36,6 +33,6 @@ publish-pypi:
 	$(flit) publish
 
 tags:
-	ctags -R tuxrun/ test/
+	ctags -R $(PROJECT)/ test/
 
 release: integration
