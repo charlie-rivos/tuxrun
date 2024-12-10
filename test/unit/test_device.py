@@ -1337,14 +1337,6 @@ def artefacts(tmp_path):
             "qemu-riscv64.yaml",
         ),
         (
-            ["--device", "qemu-sh4"],
-            "qemu-sh4.yaml",
-        ),
-        (
-            ["--device", "qemu-sh4", "--boot-args", "hello"],
-            "qemu-sh4-boot-args.yaml",
-        ),
-        (
             ["--device", "qemu-sparc64"],
             "qemu-sparc64.yaml",
         ),

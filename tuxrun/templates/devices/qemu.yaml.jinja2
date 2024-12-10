@@ -15,7 +15,7 @@
 {# see https://packages.debian.org/buster/amd64/qemu-system-misc/filelist #}
 {% set qemu_misc_architectures = [
 'alpha', 'cris', 'lm32', 'm68k', 'microblaze', 'microblazeel',
-'moxie', 'or32', 's390x', 'sh4', 'sh4eb', 'tricore', 'unicore32',
+'moxie', 'or32', 's390x', 'tricore', 'unicore32',
 'xtensa', 'xtensaeb'] %}
 
 available_architectures:
@@ -204,11 +204,6 @@ actions:
           - -cpu {{ cpu|default('max') }}
 {% endif %}
           - -machine {{ machine|default('s390-ccw-virtio') }}
-{% elif arch == 'sh4' %}
-{% if cpu %}
-          - -cpu {{ cpu|default('max') }}
-{% endif %}
-          - -machine {{ machine|default('r2d') }}
 {% elif arch == 'sparc' %}
 {% if cpu %}
           - -cpu {{ cpu }}

@@ -471,26 +471,6 @@ class QemuS390(QemuDevice):
     rootfs = "https://storage.tuxboot.com/buildroot/s390/rootfs.ext4.zst"
 
 
-class QemuSh4(QemuDevice):
-    name = "qemu-sh4"
-
-    arch = "sh4"
-    lava_arch = "sh4"
-    machine = "r2d"
-    cpu = "sh7785"
-
-    extra_boot_args = "noiotrap"
-
-    console = "ttySC1"
-    rootfs_dev = "/dev/sda"
-    rootfs_arg = "-drive file={rootfs},if=ide,format=raw -serial null -serial stdio"
-
-    kernel = "https://storage.tuxboot.com/buildroot/sh4/zImage"
-    rootfs = "https://storage.tuxboot.com/buildroot/sh4/rootfs.ext4.zst"
-
-    test_character_delay = 5
-
-
 class QemuSPARC64(QemuDevice):
     name = "qemu-sparc64"
 
