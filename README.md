@@ -28,7 +28,7 @@ Testing the Linux kernel is as simple as using QEMU but it gets complicated
 when you want to support the following combinations:
 
 - Architectures (arm64, armv5, armv7, i386, mips32, mips32el, mips64, mips64el,
-  ppc32, ppc64, ppc64le, riscv64, s390, sh4, sparc64, x86_64)
+  ppc32, ppc64, ppc64le, riscv64, s390, sparc64, x86_64)
 
 - Emulation systems (QEMU or FVP or AVH)
 - Tests (every test suite has dependencies on the rootfs)

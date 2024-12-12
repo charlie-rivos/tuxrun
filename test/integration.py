@@ -271,7 +271,7 @@ def main():
         options.devices = [
             d.name for d in Device.list() if fnmatch.fnmatch(d.name, pat)
         ]
-        for qemu in ["qemu-riscv32", "qemu-sh4"]:
+        for qemu in ["qemu-riscv32"]:
             if qemu in options.devices:
                 options.devices.remove(qemu)
 
