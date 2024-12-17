@@ -68,6 +68,13 @@ class KSelftestCachestat(KSelfTest):
     timeout = 5
 
 
+class KSelftestBpf(KSelfTest):
+    devices = ["qemu-arm64", "fvp-aemva", "qemu-x86_64"]
+    name = "kselftest-bpf"
+    cmdfile = "bpf"
+    timeout = 45
+
+
 class KSelftestCapabilities(KSelfTest):
     name = "kselftest-capabilities"
     timeout = 5
